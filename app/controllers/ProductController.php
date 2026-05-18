@@ -21,6 +21,9 @@ class ProductController {
     private ?PDO $db;
     private array $systemOptions = self::FALLBACK_SYSTEM_OPTIONS;
 
+    /**
+     * Khởi tạo controller, mở kết nối MySQL và tải các lựa chọn hệ thống.
+     */
     public function __construct() {
         $database = new Database();
         $this->db = $database->getConnection();
@@ -33,6 +36,9 @@ class ProductController {
         $this->systemOptions = $this->loadSystemOptions();
     }
 
+    /**
+     * Hiển thị trang danh sách sản phẩm, có tìm kiếm, lọc và phân trang.
+     */
     public function list(): void {
         $systemOptions = $this->systemOptions;
         $filters = $this->readProductFilters($_GET);
@@ -47,6 +53,9 @@ class ProductController {
         include __DIR__ . '/../views/product/list.php';
     }
 
+    /**
+     * Hiển thị trang chi tiết của một sản phẩm theo ID.
+     */
     public function detail(int $id): void {
         $product = $this->findProduct($id);
 
@@ -57,6 +66,9 @@ class ProductController {
         include __DIR__ . '/../views/product/detail.php';
     }
 
+    /**
+     * Hiển thị form thêm sản phẩm và xử lý lưu sản phẩm mới vào MySQL.
+     */
     public function add(): void {
         $errors = [];
         $systemOptions = $this->systemOptions;
@@ -85,6 +97,9 @@ class ProductController {
         include __DIR__ . '/../views/product/add.php';
     }
 
+    /**
+     * Hiển thị form sửa sản phẩm và xử lý cập nhật sản phẩm trong MySQL.
+     */
     public function edit(int $id): void {
         $product = $this->findProduct($id);
 
@@ -102,8 +117,8 @@ class ProductController {
             $finalImages = $this->mergeImageSlots($imageSlots, $slotUploads);
 
             if (empty($errors)) {
-            $currentImages = $product->getImages();
-            $unusedImages = array_values(array_diff($currentImages, array_filter($finalImages)));
+                $currentImages = $product->getImages();
+                $unusedImages = array_values(array_diff($currentImages, array_filter($finalImages)));
 
                 $this->updateProduct($id, $name, $description, (float) $price, $finalImages, $systemInfo);
                 $this->deleteImageFiles($unusedImages);
@@ -119,6 +134,9 @@ class ProductController {
         include __DIR__ . '/../views/product/edit.php';
     }
 
+    /**
+     * Xóa sản phẩm theo ID, đồng thời xóa file ảnh cục bộ nếu có.
+     */
     public function delete(int $id): void {
         $product = $this->findProduct($id);
 
@@ -130,6 +148,9 @@ class ProductController {
         $this->redirect(url('Product/list'));
     }
 
+    /**
+     * Hiển thị trang quản trị gồm danh sách sản phẩm và quản lý danh mục.
+     */
     public function admin(): void {
         $products = $this->fetchProducts();
         $categories = $this->fetchCategories();
@@ -137,6 +158,9 @@ class ProductController {
         include __DIR__ . '/../views/admin/index.php';
     }
 
+    /**
+     * Xử lý thêm danh mục mới từ form trong trang admin.
+     */
     public function categoryAdd(): void {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect(url('Admin'));
@@ -154,6 +178,9 @@ class ProductController {
         $this->redirect(url('Admin') . '#categories');
     }
 
+    /**
+     * Xử lý sửa tên và mô tả của một danh mục.
+     */
     public function categoryEdit(int $id): void {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect(url('Admin'));
@@ -171,12 +198,18 @@ class ProductController {
         $this->redirect(url('Admin') . '#categories');
     }
 
+    /**
+     * Xóa danh mục; sản phẩm thuộc danh mục này sẽ thành chưa phân loại.
+     */
     public function categoryDelete(int $id): void {
         $this->deleteCategory($id);
         $_SESSION['flash_success'] = 'Đã xóa danh mục. Sản phẩm thuộc danh mục này sẽ chuyển sang trạng thái chưa phân loại.';
         $this->redirect(url('Admin') . '#categories');
     }
 
+    /**
+     * Tải các lựa chọn cho form/filter từ database, fallback nếu bảng trống.
+     */
     private function loadSystemOptions(): array {
         $options = self::FALLBACK_SYSTEM_OPTIONS;
         $options['category'] = $this->fetchColumnValues('categories', 'name') ?: $options['category'];
@@ -185,6 +218,9 @@ class ProductController {
         return $options;
     }
 
+    /**
+     * Lấy một cột dữ liệu cho phép từ bảng categories hoặc genres.
+     */
     private function fetchColumnValues(string $table, string $column): array {
         $allowed = [
             'categories' => ['name'],
@@ -199,6 +235,9 @@ class ProductController {
         return array_map('strval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
+    /**
+     * Lấy toàn bộ sản phẩm từ MySQL và chuyển thành danh sách ProductModel.
+     */
     private function fetchProducts(): array {
         $stmt = $this->db->query(
             'SELECT p.*, c.name AS category_name
@@ -222,6 +261,9 @@ class ProductController {
         return $products;
     }
 
+    /**
+     * Lấy danh sách danh mục kèm số sản phẩm đang thuộc từng danh mục.
+     */
     private function fetchCategories(): array {
         $stmt = $this->db->query(
             'SELECT c.id, c.name, c.description, COUNT(p.id) AS product_count
@@ -234,6 +276,9 @@ class ProductController {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Tìm một sản phẩm theo ID trong database.
+     */
     private function findProduct(int $id): ?ProductModel {
         $stmt = $this->db->prepare(
             'SELECT p.*, c.name AS category_name
@@ -252,6 +297,9 @@ class ProductController {
         return $this->hydrateProduct($row, $this->fetchProductImages($id), $this->fetchProductGenres($id));
     }
 
+    /**
+     * Ghép dữ liệu SQL, ảnh và thể loại thành một đối tượng ProductModel.
+     */
     private function hydrateProduct(array $row, array $images, array $genres): ProductModel {
         return new ProductModel(
             (int) $row['id'],
@@ -271,6 +319,9 @@ class ProductController {
         );
     }
 
+    /**
+     * Lấy 3 slot ảnh của sản phẩm, giữ đúng vị trí image_slot 1, 2, 3.
+     */
     private function fetchProductImages(int $productId): array {
         $stmt = $this->db->prepare(
             'SELECT image_slot, image_url
@@ -289,6 +340,9 @@ class ProductController {
         return $images;
     }
 
+    /**
+     * Lấy danh sách tên thể loại của một sản phẩm.
+     */
     private function fetchProductGenres(int $productId): array {
         $stmt = $this->db->prepare(
             'SELECT g.name
@@ -302,6 +356,9 @@ class ProductController {
         return array_map('strval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
+    /**
+     * Tạo sản phẩm mới, lưu thông tin chính, ảnh và thể loại vào MySQL.
+     */
     private function createProduct(string $name, string $description, float $price, array $images, array $systemInfo): int {
         $this->db->beginTransaction();
 
@@ -338,6 +395,9 @@ class ProductController {
         }
     }
 
+    /**
+     * Cập nhật sản phẩm hiện có, bao gồm thông tin chính, ảnh và thể loại.
+     */
     private function updateProduct(int $id, string $name, string $description, float $price, array $images, array $systemInfo): void {
         $this->db->beginTransaction();
 
@@ -379,12 +439,18 @@ class ProductController {
         }
     }
 
+    /**
+     * Xóa sản phẩm khỏi bảng products và chỉnh lại AUTO_INCREMENT.
+     */
     private function deleteProduct(int $id): void {
         $stmt = $this->db->prepare('DELETE FROM products WHERE id = :id');
         $stmt->execute(['id' => $id]);
         $this->resetAutoIncrement('products');
     }
 
+    /**
+     * Ghi lại toàn bộ 3 slot ảnh của sản phẩm trong bảng product_images.
+     */
     private function replaceProductImages(int $productId, array $images): void {
         $stmt = $this->db->prepare('DELETE FROM product_images WHERE product_id = :product_id');
         $stmt->execute(['product_id' => $productId]);
@@ -412,6 +478,9 @@ class ProductController {
 
     }
 
+    /**
+     * Ghi lại các thể loại của sản phẩm trong bảng trung gian product_genres.
+     */
     private function replaceProductGenres(int $productId, array $genres): void {
         $stmt = $this->db->prepare('DELETE FROM product_genres WHERE product_id = :product_id');
         $stmt->execute(['product_id' => $productId]);
@@ -434,6 +503,9 @@ class ProductController {
         }
     }
 
+    /**
+     * Tìm ID danh mục dựa trên tên danh mục.
+     */
     private function categoryIdByName(string $name): ?int {
         $stmt = $this->db->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
         $stmt->execute(['name' => $name]);
@@ -442,6 +514,9 @@ class ProductController {
         return $id === false ? null : (int) $id;
     }
 
+    /**
+     * Thêm một danh mục mới vào bảng categories.
+     */
     private function createCategory(string $name, string $description): void {
         $stmt = $this->db->prepare(
             'INSERT INTO categories (id, name, description)
@@ -455,6 +530,9 @@ class ProductController {
         $this->resetAutoIncrement('categories');
     }
 
+    /**
+     * Cập nhật tên và mô tả của danh mục.
+     */
     private function updateCategory(int $id, string $name, string $description): void {
         $stmt = $this->db->prepare(
             'UPDATE categories
@@ -468,12 +546,18 @@ class ProductController {
         ]);
     }
 
+    /**
+     * Xóa danh mục khỏi bảng categories và chỉnh lại AUTO_INCREMENT.
+     */
     private function deleteCategory(int $id): void {
         $stmt = $this->db->prepare('DELETE FROM categories WHERE id = :id');
         $stmt->execute(['id' => $id]);
         $this->resetAutoIncrement('categories');
     }
 
+    /**
+     * Kiểm tra tên danh mục đã tồn tại chưa, có thể bỏ qua một ID khi sửa.
+     */
     private function categoryNameExists(string $name, ?int $excludeId = null): bool {
         $sql = 'SELECT COUNT(*) FROM categories WHERE name = :name';
         $params = ['name' => $name];
@@ -489,6 +573,9 @@ class ProductController {
         return (int) $stmt->fetchColumn() > 0;
     }
 
+    /**
+     * Tìm ID thể loại dựa trên tên thể loại.
+     */
     private function genreIdByName(string $name): ?int {
         $stmt = $this->db->prepare('SELECT id FROM genres WHERE name = :name LIMIT 1');
         $stmt->execute(['name' => $name]);
@@ -497,6 +584,9 @@ class ProductController {
         return $id === false ? null : (int) $id;
     }
 
+    /**
+     * Lấy ID trống nhỏ nhất để tránh bỏ nhảy số ID trong các bảng chính.
+     */
     private function nextAvailableId(string $table): int {
         if (!in_array($table, ['products', 'product_images', 'categories'], true)) {
             throw new InvalidArgumentException('Bảng không được phép cấp ID thủ công.');
@@ -519,6 +609,9 @@ class ProductController {
         return $nextId;
     }
 
+    /**
+     * Đưa AUTO_INCREMENT về ngay sau ID lớn nhất hiện có của bảng.
+     */
     private function resetAutoIncrement(string $table): void {
         if (!in_array($table, ['products', 'product_images', 'categories'], true)) {
             throw new InvalidArgumentException('Bảng không được phép reset AUTO_INCREMENT.');
@@ -528,6 +621,9 @@ class ProductController {
         $this->db->exec("ALTER TABLE {$table} AUTO_INCREMENT = {$nextId}");
     }
 
+    /**
+     * Kiểm tra dữ liệu danh mục trước khi thêm hoặc sửa.
+     */
     private function validateCategoryInput(array $input, ?int $excludeId = null): array {
         $name = trim((string) ($input['name'] ?? ''));
         $description = trim((string) ($input['description'] ?? ''));
@@ -545,6 +641,9 @@ class ProductController {
         return [$name, $description, $errors];
     }
 
+    /**
+     * Kiểm tra dữ liệu sản phẩm trước khi thêm hoặc sửa.
+     */
     private function validateProductInput(array $input): array {
         $name = trim((string) ($input['name'] ?? ''));
         $description = trim((string) ($input['description'] ?? ''));
@@ -590,6 +689,9 @@ class ProductController {
         return [$name, $description, $price, $systemInfo, $errors];
     }
 
+    /**
+     * Trả về thông tin hệ thống mặc định cho form thêm sản phẩm.
+     */
     private function defaultSystemInfo(): array {
         return [
             'category' => $this->systemOptions['category'][1] ?? 'Nội địa',
@@ -602,6 +704,9 @@ class ProductController {
         ];
     }
 
+    /**
+     * Đọc và làm sạch các tham số lọc sản phẩm từ URL.
+     */
     private function readProductFilters(array $input): array {
         return [
             'q' => trim((string) ($input['q'] ?? '')),
@@ -614,11 +719,17 @@ class ProductController {
         ];
     }
 
+    /**
+     * Chỉ chấp nhận giá trị filter nằm trong danh sách lựa chọn hợp lệ.
+     */
     private function validFilterValue(string $field, mixed $value): string {
         $value = trim((string) $value);
         return in_array($value, $this->systemOptions[$field] ?? [], true) ? $value : '';
     }
 
+    /**
+     * Lọc danh sách thể loại gửi lên, chỉ giữ các thể loại hợp lệ và không trùng.
+     */
     private function validGenres(mixed $genres): array {
         if (!is_array($genres)) {
             $genres = $genres === '' ? [] : [$genres];
@@ -630,6 +741,9 @@ class ProductController {
         )));
     }
 
+    /**
+     * Đọc 3 ô đường dẫn ảnh từ form và giữ đúng thứ tự slot.
+     */
     private function readImageSlots(array $input): array {
         $slots = $input['image_urls'] ?? [];
         if (!is_array($slots)) {
@@ -644,6 +758,9 @@ class ProductController {
         return $images;
     }
 
+    /**
+     * Ghép đường dẫn ảnh cũ với ảnh mới upload; upload ở slot nào thì thay slot đó.
+     */
     private function mergeImageSlots(array $imageSlots, array $slotUploads): array {
         $images = array_slice(array_pad($imageSlots, self::IMAGE_SLOT_COUNT, ''), 0, self::IMAGE_SLOT_COUNT);
 
@@ -658,6 +775,9 @@ class ProductController {
         return $images;
     }
 
+    /**
+     * Lọc danh sách sản phẩm theo từ khóa, danh mục, thông số và thể loại.
+     */
     private function filterProducts(array $products, array $filters): array {
         return array_values(array_filter($products, function (ProductModel $product) use ($filters): bool {
             if ($filters['q'] !== '') {
@@ -677,10 +797,16 @@ class ProductController {
         }));
     }
 
+    /**
+     * Chuyển chuỗi về chữ thường, ưu tiên UTF-8 nếu máy có mbstring.
+     */
     private function lowerText(string $text): string {
         return function_exists('mb_strtolower') ? mb_strtolower($text, 'UTF-8') : strtolower($text);
     }
 
+    /**
+     * Xử lý upload nhiều ảnh cùng lúc; hiện giữ để tương thích với luồng cũ.
+     */
     private function handleImageUploads(array $files, array &$errors): array {
         if (empty($files) || empty($files['name'])) {
             return [];
@@ -728,6 +854,9 @@ class ProductController {
         return $images;
     }
 
+    /**
+     * Xử lý upload ảnh theo từng slot riêng: ảnh 1, ảnh 2, ảnh 3.
+     */
     private function handleImageSlotUploads(array $files, array &$errors): array {
         if (empty($files) || empty($files['name']) || !is_array($files['name'])) {
             return [];
@@ -761,6 +890,9 @@ class ProductController {
         return $images;
     }
 
+    /**
+     * Kiểm tra và lưu một file ảnh upload vào thư mục uploads/products.
+     */
     private function storeUploadedImage(array $file, array &$errors): ?string {
         if ($file['error'] !== UPLOAD_ERR_OK) {
             $errors[] = 'Không thể tải một ảnh lên. Vui lòng thử lại.';
@@ -789,6 +921,9 @@ class ProductController {
         return url('uploads/products/' . $fileName);
     }
 
+    /**
+     * Chuẩn hóa cấu trúc $_FILES khi upload nhiều file trong cùng một input.
+     */
     private function normalizeUploadedFiles(array $files): array {
         if (!is_array($files['name'])) {
             return [$files];
@@ -808,6 +943,9 @@ class ProductController {
         return $normalized;
     }
 
+    /**
+     * Xóa các file ảnh cục bộ không còn được sản phẩm sử dụng.
+     */
     private function deleteImageFiles(array $images): void {
         foreach ($images as $image) {
             if (preg_match('/^https?:\/\//i', $image)) {
@@ -822,6 +960,9 @@ class ProductController {
         }
     }
 
+    /**
+     * Chuyển đường dẫn ảnh trong database thành đường dẫn dùng để hiển thị trên web.
+     */
     private function imageForDisplay(string $image): string {
         $image = trim($image);
         if ($image === '' || preg_match('/^(https?:)?\/\//i', $image) || str_starts_with($image, '/')) {
@@ -831,6 +972,9 @@ class ProductController {
         return url($image);
     }
 
+    /**
+     * Chuyển đường dẫn ảnh từ form về dạng gọn để lưu trong database.
+     */
     private function imageForDatabase(string $image): string {
         $image = trim($image);
         $basePath = base_path();
@@ -846,11 +990,17 @@ class ProductController {
         return $image;
     }
 
+    /**
+     * Điều hướng trình duyệt sang URL khác và dừng xử lý hiện tại.
+     */
     private function redirect(string $url): void {
         header('Location: ' . $url);
         exit;
     }
 
+    /**
+     * Trả về lỗi 404 khi không tìm thấy sản phẩm.
+     */
     private function notFound(): void {
         http_response_code(404);
         die('Không tìm thấy game!');
