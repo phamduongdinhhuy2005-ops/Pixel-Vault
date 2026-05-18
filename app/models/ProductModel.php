@@ -22,18 +22,9 @@ class ProductModel {
     public function getDescription(): string { return $this->Description; }
     public function getPrice(): float { return $this->Price; }
     public function getImages(): array {
-        if (!isset($this->Images)) {
-            $this->Images = [];
-        }
-
         return array_values(array_filter($this->Images, fn(string $image) => $image !== ''));
     }
     public function getImageSlots(): array {
-        if (!isset($this->Images)) {
-            $this->Images = [];
-        }
-
-        $this->Images = $this->normalizeImageSlots($this->Images);
         return $this->Images;
     }
     public function getPrimaryImage(): ?string {
@@ -41,11 +32,6 @@ class ProductModel {
         return $images[0] ?? null;
     }
     public function getSystemInfo(): array {
-        if (!isset($this->SystemInfo) || !is_array($this->SystemInfo)) {
-            $this->SystemInfo = [];
-        }
-
-        $this->SystemInfo = $this->normalizeSystemInfo($this->SystemInfo);
         return $this->SystemInfo;
     }
     public function getCondition(): string { return $this->getSystemInfo()['condition']; }
@@ -56,15 +42,6 @@ class ProductModel {
     public function getCategory(): string { return $this->getSystemInfo()['category']; }
     public function getGenres(): array { return $this->getSystemInfo()['genres']; }
     public function getGenreText(): string { return implode(', ', $this->getGenres()); }
-
-    public function setName(string $Name): void { $this->Name = $Name; }
-    public function setDescription(string $Description): void { $this->Description = $Description; }
-    public function setPrice(float $Price): void { $this->Price = $Price; }
-    public function setImages(array $Images): void { $this->Images = $this->normalizeImageSlots($Images); }
-    public function setSystemInfo(array $SystemInfo): void { $this->SystemInfo = $this->normalizeSystemInfo($SystemInfo); }
-    public function addImages(array $Images): void {
-        $this->Images = $this->normalizeImageSlots(array_merge($this->getImages(), $Images));
-    }
 
     private function normalizeImageSlots(array $Images): array {
         $slots = [];

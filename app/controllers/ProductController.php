@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/CategoryModel.php';
 require_once __DIR__ . '/../models/ProductModel.php';
 
 class ProductController {
@@ -19,6 +20,7 @@ class ProductController {
     ];
 
     private ?PDO $db;
+    private CategoryModel $categories;
     private array $systemOptions = self::FALLBACK_SYSTEM_OPTIONS;
 
     /**
@@ -33,6 +35,7 @@ class ProductController {
             die('Không thể kết nối cơ sở dữ liệu pixel_vault.');
         }
 
+        $this->categories = new CategoryModel($this->db);
         $this->systemOptions = $this->loadSystemOptions();
     }
 
@@ -153,58 +156,9 @@ class ProductController {
      */
     public function admin(): void {
         $products = $this->fetchProducts();
-        $categories = $this->fetchCategories();
+        $categories = $this->categories->allWithProductCount();
         $systemOptions = $this->systemOptions;
         include __DIR__ . '/../views/admin/index.php';
-    }
-
-    /**
-     * Xử lý thêm danh mục mới từ form trong trang admin.
-     */
-    public function categoryAdd(): void {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect(url('Admin'));
-        }
-
-        [$name, $description, $errors] = $this->validateCategoryInput($_POST);
-
-        if (!empty($errors)) {
-            $_SESSION['flash_error'] = implode(' ', $errors);
-            $this->redirect(url('Admin') . '#categories');
-        }
-
-        $this->createCategory($name, $description);
-        $_SESSION['flash_success'] = 'Đã thêm danh mục mới.';
-        $this->redirect(url('Admin') . '#categories');
-    }
-
-    /**
-     * Xử lý sửa tên và mô tả của một danh mục.
-     */
-    public function categoryEdit(int $id): void {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect(url('Admin'));
-        }
-
-        [$name, $description, $errors] = $this->validateCategoryInput($_POST, $id);
-
-        if (!empty($errors)) {
-            $_SESSION['flash_error'] = implode(' ', $errors);
-            $this->redirect(url('Admin') . '#categories');
-        }
-
-        $this->updateCategory($id, $name, $description);
-        $_SESSION['flash_success'] = 'Đã cập nhật danh mục.';
-        $this->redirect(url('Admin') . '#categories');
-    }
-
-    /**
-     * Xóa danh mục; sản phẩm thuộc danh mục này sẽ thành chưa phân loại.
-     */
-    public function categoryDelete(int $id): void {
-        $this->deleteCategory($id);
-        $_SESSION['flash_success'] = 'Đã xóa danh mục. Sản phẩm thuộc danh mục này sẽ chuyển sang trạng thái chưa phân loại.';
-        $this->redirect(url('Admin') . '#categories');
     }
 
     /**
@@ -212,18 +166,17 @@ class ProductController {
      */
     private function loadSystemOptions(): array {
         $options = self::FALLBACK_SYSTEM_OPTIONS;
-        $options['category'] = $this->fetchColumnValues('categories', 'name') ?: $options['category'];
+        $options['category'] = $this->categories->names() ?: $options['category'];
         $options['genres'] = $this->fetchColumnValues('genres', 'name') ?: $options['genres'];
 
         return $options;
     }
 
     /**
-     * Lấy một cột dữ liệu cho phép từ bảng categories hoặc genres.
+     * Lấy một cột dữ liệu cho phép từ bảng genres.
      */
     private function fetchColumnValues(string $table, string $column): array {
         $allowed = [
-            'categories' => ['name'],
             'genres' => ['name'],
         ];
 
@@ -259,21 +212,6 @@ class ProductController {
         }
 
         return $products;
-    }
-
-    /**
-     * Lấy danh sách danh mục kèm số sản phẩm đang thuộc từng danh mục.
-     */
-    private function fetchCategories(): array {
-        $stmt = $this->db->query(
-            'SELECT c.id, c.name, c.description, COUNT(p.id) AS product_count
-             FROM categories c
-             LEFT JOIN products p ON p.category_id = c.id
-             GROUP BY c.id, c.name, c.description
-             ORDER BY c.id'
-        );
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -363,17 +301,15 @@ class ProductController {
         $this->db->beginTransaction();
 
         try {
-            $productId = $this->nextAvailableId('products');
             $stmt = $this->db->prepare(
-                'INSERT INTO products (id, name, description, price, category_id, product_condition, resolution, rom_format, players, region)
-                 VALUES (:id, :name, :description, :price, :category_id, :product_condition, :resolution, :rom_format, :players, :region)'
+                'INSERT INTO products (name, description, price, category_id, product_condition, resolution, rom_format, players, region)
+                 VALUES (:name, :description, :price, :category_id, :product_condition, :resolution, :rom_format, :players, :region)'
             );
             $stmt->execute([
-                'id' => $productId,
                 'name' => $name,
                 'description' => $description,
                 'price' => $price,
-                'category_id' => $this->categoryIdByName($systemInfo['category']),
+                'category_id' => $this->categories->idByName($systemInfo['category']),
                 'product_condition' => $systemInfo['condition'],
                 'resolution' => $systemInfo['resolution'],
                 'rom_format' => $systemInfo['rom_format'],
@@ -381,10 +317,10 @@ class ProductController {
                 'region' => $systemInfo['region'],
             ]);
 
+            $productId = (int) $this->db->lastInsertId();
             $this->replaceProductImages($productId, $images);
             $this->replaceProductGenres($productId, $systemInfo['genres']);
             $this->db->commit();
-            $this->resetAutoIncrement('products');
 
             return $productId;
         } catch (Throwable $exception) {
@@ -420,7 +356,7 @@ class ProductController {
                 'name' => $name,
                 'description' => $description,
                 'price' => $price,
-                'category_id' => $this->categoryIdByName($systemInfo['category']),
+                'category_id' => $this->categories->idByName($systemInfo['category']),
                 'product_condition' => $systemInfo['condition'],
                 'resolution' => $systemInfo['resolution'],
                 'rom_format' => $systemInfo['rom_format'],
@@ -440,12 +376,11 @@ class ProductController {
     }
 
     /**
-     * Xóa sản phẩm khỏi bảng products và chỉnh lại AUTO_INCREMENT.
+     * Xóa sản phẩm khỏi bảng products.
      */
     private function deleteProduct(int $id): void {
         $stmt = $this->db->prepare('DELETE FROM products WHERE id = :id');
         $stmt->execute(['id' => $id]);
-        $this->resetAutoIncrement('products');
     }
 
     /**
@@ -456,8 +391,8 @@ class ProductController {
         $stmt->execute(['product_id' => $productId]);
 
         $stmt = $this->db->prepare(
-            'INSERT INTO product_images (id, product_id, image_url, image_slot, is_primary)
-             VALUES (:id, :product_id, :image_url, :image_slot, :is_primary)'
+            'INSERT INTO product_images (product_id, image_url, image_slot, is_primary)
+             VALUES (:product_id, :image_url, :image_slot, :is_primary)'
         );
 
         $images = array_slice(array_pad($images, self::IMAGE_SLOT_COUNT, ''), 0, self::IMAGE_SLOT_COUNT);
@@ -468,7 +403,6 @@ class ProductController {
             }
 
             $stmt->execute([
-                'id' => $this->nextAvailableId('product_images'),
                 'product_id' => $productId,
                 'image_url' => $this->imageForDatabase($image),
                 'image_slot' => $index + 1,
@@ -504,76 +438,6 @@ class ProductController {
     }
 
     /**
-     * Tìm ID danh mục dựa trên tên danh mục.
-     */
-    private function categoryIdByName(string $name): ?int {
-        $stmt = $this->db->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
-        $stmt->execute(['name' => $name]);
-        $id = $stmt->fetchColumn();
-
-        return $id === false ? null : (int) $id;
-    }
-
-    /**
-     * Thêm một danh mục mới vào bảng categories.
-     */
-    private function createCategory(string $name, string $description): void {
-        $stmt = $this->db->prepare(
-            'INSERT INTO categories (id, name, description)
-             VALUES (:id, :name, :description)'
-        );
-        $stmt->execute([
-            'id' => $this->nextAvailableId('categories'),
-            'name' => $name,
-            'description' => $description,
-        ]);
-        $this->resetAutoIncrement('categories');
-    }
-
-    /**
-     * Cập nhật tên và mô tả của danh mục.
-     */
-    private function updateCategory(int $id, string $name, string $description): void {
-        $stmt = $this->db->prepare(
-            'UPDATE categories
-             SET name = :name, description = :description
-             WHERE id = :id'
-        );
-        $stmt->execute([
-            'id' => $id,
-            'name' => $name,
-            'description' => $description,
-        ]);
-    }
-
-    /**
-     * Xóa danh mục khỏi bảng categories và chỉnh lại AUTO_INCREMENT.
-     */
-    private function deleteCategory(int $id): void {
-        $stmt = $this->db->prepare('DELETE FROM categories WHERE id = :id');
-        $stmt->execute(['id' => $id]);
-        $this->resetAutoIncrement('categories');
-    }
-
-    /**
-     * Kiểm tra tên danh mục đã tồn tại chưa, có thể bỏ qua một ID khi sửa.
-     */
-    private function categoryNameExists(string $name, ?int $excludeId = null): bool {
-        $sql = 'SELECT COUNT(*) FROM categories WHERE name = :name';
-        $params = ['name' => $name];
-
-        if ($excludeId !== null) {
-            $sql .= ' AND id <> :id';
-            $params['id'] = $excludeId;
-        }
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-
-        return (int) $stmt->fetchColumn() > 0;
-    }
-
-    /**
      * Tìm ID thể loại dựa trên tên thể loại.
      */
     private function genreIdByName(string $name): ?int {
@@ -582,63 +446,6 @@ class ProductController {
         $id = $stmt->fetchColumn();
 
         return $id === false ? null : (int) $id;
-    }
-
-    /**
-     * Lấy ID trống nhỏ nhất để tránh bỏ nhảy số ID trong các bảng chính.
-     */
-    private function nextAvailableId(string $table): int {
-        if (!in_array($table, ['products', 'product_images', 'categories'], true)) {
-            throw new InvalidArgumentException('Bảng không được phép cấp ID thủ công.');
-        }
-
-        $ids = array_map('intval', $this->db->query("SELECT id FROM {$table} ORDER BY id")->fetchAll(PDO::FETCH_COLUMN));
-        $nextId = 1;
-
-        foreach ($ids as $id) {
-            if ($id === $nextId) {
-                $nextId++;
-                continue;
-            }
-
-            if ($id > $nextId) {
-                break;
-            }
-        }
-
-        return $nextId;
-    }
-
-    /**
-     * Đưa AUTO_INCREMENT về ngay sau ID lớn nhất hiện có của bảng.
-     */
-    private function resetAutoIncrement(string $table): void {
-        if (!in_array($table, ['products', 'product_images', 'categories'], true)) {
-            throw new InvalidArgumentException('Bảng không được phép reset AUTO_INCREMENT.');
-        }
-
-        $nextId = ((int) $this->db->query("SELECT COALESCE(MAX(id), 0) + 1 FROM {$table}")->fetchColumn());
-        $this->db->exec("ALTER TABLE {$table} AUTO_INCREMENT = {$nextId}");
-    }
-
-    /**
-     * Kiểm tra dữ liệu danh mục trước khi thêm hoặc sửa.
-     */
-    private function validateCategoryInput(array $input, ?int $excludeId = null): array {
-        $name = trim((string) ($input['name'] ?? ''));
-        $description = trim((string) ($input['description'] ?? ''));
-        $errors = [];
-
-        $nameLength = function_exists('mb_strlen') ? mb_strlen($name) : strlen($name);
-        if ($name === '') {
-            $errors[] = 'Tên danh mục là bắt buộc.';
-        } elseif ($nameLength < 2 || $nameLength > 100) {
-            $errors[] = 'Tên danh mục phải từ 2 đến 100 ký tự.';
-        } elseif ($this->categoryNameExists($name, $excludeId)) {
-            $errors[] = 'Danh mục này đã tồn tại.';
-        }
-
-        return [$name, $description, $errors];
     }
 
     /**
@@ -805,56 +612,6 @@ class ProductController {
     }
 
     /**
-     * Xử lý upload nhiều ảnh cùng lúc; hiện giữ để tương thích với luồng cũ.
-     */
-    private function handleImageUploads(array $files, array &$errors): array {
-        if (empty($files) || empty($files['name'])) {
-            return [];
-        }
-
-        $uploads = $this->normalizeUploadedFiles($files);
-        $images = [];
-
-        if (!is_dir(self::IMAGE_UPLOAD_DIR)) {
-            mkdir(self::IMAGE_UPLOAD_DIR, 0775, true);
-        }
-
-        foreach ($uploads as $file) {
-            if ($file['error'] === UPLOAD_ERR_NO_FILE) {
-                continue;
-            }
-
-            if ($file['error'] !== UPLOAD_ERR_OK) {
-                $errors[] = 'Không thể tải một ảnh lên. Vui lòng thử lại.';
-                continue;
-            }
-
-            if ($file['size'] > self::MAX_IMAGE_SIZE) {
-                $errors[] = 'Mỗi ảnh sản phẩm tối đa 4MB.';
-                continue;
-            }
-
-            $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-            if (!in_array($extension, self::ALLOWED_IMAGE_EXTENSIONS, true)) {
-                $errors[] = 'Ảnh chỉ hỗ trợ JPG, PNG, GIF hoặc WEBP.';
-                continue;
-            }
-
-            $fileName = 'product_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
-            $target = rtrim(self::IMAGE_UPLOAD_DIR, '/\\') . DIRECTORY_SEPARATOR . $fileName;
-
-            if (!move_uploaded_file($file['tmp_name'], $target)) {
-                $errors[] = 'Không thể lưu ảnh sản phẩm.';
-                continue;
-            }
-
-            $images[] = url('uploads/products/' . $fileName);
-        }
-
-        return $images;
-    }
-
-    /**
      * Xử lý upload ảnh theo từng slot riêng: ảnh 1, ảnh 2, ảnh 3.
      */
     private function handleImageSlotUploads(array $files, array &$errors): array {
@@ -919,28 +676,6 @@ class ProductController {
         }
 
         return url('uploads/products/' . $fileName);
-    }
-
-    /**
-     * Chuẩn hóa cấu trúc $_FILES khi upload nhiều file trong cùng một input.
-     */
-    private function normalizeUploadedFiles(array $files): array {
-        if (!is_array($files['name'])) {
-            return [$files];
-        }
-
-        $normalized = [];
-        foreach ($files['name'] as $index => $name) {
-            $normalized[] = [
-                'name' => $name,
-                'type' => $files['type'][$index] ?? '',
-                'tmp_name' => $files['tmp_name'][$index] ?? '',
-                'error' => $files['error'][$index] ?? UPLOAD_ERR_NO_FILE,
-                'size' => $files['size'][$index] ?? 0,
-            ];
-        }
-
-        return $normalized;
     }
 
     /**
