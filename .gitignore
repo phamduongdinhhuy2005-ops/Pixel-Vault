@@ -1,0 +1,14 @@
+.vscode/
+
+# Local archives / backups
+*.zip
+*.rar
+*.7z
+
+# OS/editor noise
+Thumbs.db
+.DS_Store
+
+# Runtime logs
+*.log
+

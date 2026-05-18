@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" role="img" aria-labelledby="title desc">
+  <title id="title">Retro handheld console</title>
+  <desc id="desc">A pixel styled red and cream handheld game console for Pixel Vault.</desc>
+  <defs>
+    <pattern id="scan" width="8" height="8" patternUnits="userSpaceOnUse">
+      <path d="M0 0h8v3H0z" fill="#111" opacity=".09"/>
+    </pattern>
+  </defs>
+  <path d="M162 58h576l54 54v376l-74 74H184l-76-76V112z" fill="#1b1c1c"/>
+  <path d="M144 42h576l54 54v376l-74 74H166l-76-76V96z" fill="#fbf9f8" stroke="#1b1c1c" stroke-width="14"/>
+  <path d="M144 42h576l54 54v66H90V96z" fill="#bb0509" stroke="#1b1c1c" stroke-width="14"/>
+  <path d="M220 186h460v252H220z" fill="#1b1c1c" stroke="#1b1c1c" stroke-width="12"/>
+  <path d="M248 214h404v196H248z" fill="#b2d42f"/>
+  <path d="M248 214h404v196H248z" fill="url(#scan)"/>
+  <path d="M286 264h64v64h-64zM376 264h64v64h-64zM466 264h64v64h-64z" fill="#526600" opacity=".42"/>
+  <path d="M286 346h244v18H286z" fill="#526600" opacity=".55"/>
+  <text x="450" y="386" text-anchor="middle" font-family="monospace" font-size="26" font-weight="700" fill="#3d4c00">PIXEL VAULT</text>
+  <path d="M145 220h34v-34h42v34h34v42h-34v34h-42v-34h-34z" fill="#1b1c1c"/>
+  <circle cx="706" cy="252" r="32" fill="#bb0509" stroke="#1b1c1c" stroke-width="10"/>
+  <circle cx="780" cy="326" r="32" fill="#dbff5c" stroke="#1b1c1c" stroke-width="10"/>
+  <path d="M132 492h188v24H132zM578 492h196v24H578z" fill="#1b1c1c"/>
+  <path d="M664 118h64M112 118h116" stroke="#fbf9f8" stroke-width="16" stroke-linecap="square"/>
+  <text x="450" y="123" text-anchor="middle" font-family="monospace" font-size="40" font-weight="700" fill="#fbf9f8">RETRO CONSOLE</text>
+</svg>
