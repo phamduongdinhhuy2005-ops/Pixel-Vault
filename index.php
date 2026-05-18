@@ -35,5 +35,15 @@ if ($section === 'product') {
     exit;
 }
 
+if ($section === 'category') {
+    match ($action) {
+        'add' => $controller->categoryAdd(),
+        'edit' => $controller->categoryEdit($id),
+        'delete' => $controller->categoryDelete($id),
+        default => $controller->admin(),
+    };
+    exit;
+}
+
 $controller->list();
 ?>

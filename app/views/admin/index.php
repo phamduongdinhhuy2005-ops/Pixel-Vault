@@ -1,5 +1,6 @@
 <?php 
 $products = $products ?? [];
+$categories = $categories ?? [];
 $total    = count($products);
 $revenue  = array_sum(array_map(fn($p) => $p->getPrice(), $products));
 ?>
@@ -125,6 +126,13 @@ $revenue  = array_sum(array_map(fn($p) => $p->getPrice(), $products));
             THÊM GAME MỚI
         </a>
     </div>
+
+    <?php if (!empty($_SESSION['flash_success']) || !empty($_SESSION['flash_error'])): ?>
+    <div class="<?= !empty($_SESSION['flash_error']) ? 'border-[#bb0509] text-[#ffb4a9]' : 'border-[#526600] text-[#dbff5c]' ?> bg-black border-4 px-5 py-4 font-brand text-[11px] font-bold uppercase tracking-[.12em]">
+        <?= htmlspecialchars($_SESSION['flash_error'] ?? $_SESSION['flash_success']) ?>
+    </div>
+    <?php unset($_SESSION['flash_success'], $_SESSION['flash_error']); ?>
+    <?php endif; ?>
 
     <!-- ─── STAT CARDS ─── -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -284,6 +292,60 @@ $revenue  = array_sum(array_map(fn($p) => $p->getPrice(), $products));
                         <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;font-size:20px">storefront</span>
                         Xem Cửa Hàng
                     </a>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div id="categories" class="bg-black border-4 border-[#526600] shadow-green">
+                <div class="px-6 py-4 border-b-4 border-[#526600] flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[#dbff5c]" style="font-variation-settings:'FILL' 1;font-size:16px">category</span>
+                        <span class="text-[11px] font-bold uppercase tracking-[.12em] text-[#dbff5c]">DANH MỤC</span>
+                    </div>
+                    <span class="bg-[#526600] px-2 py-1 font-brand text-[10px] font-bold text-[#dbff5c]"><?= count($categories) ?></span>
+                </div>
+                <div class="p-4 space-y-4">
+                    <form method="POST" action="<?= url('Category/add') ?>" class="space-y-3 border-2 border-zinc-800 bg-zinc-950 p-3">
+                        <input type="text" name="name" placeholder="Tên danh mục mới"
+                               class="w-full border-2 border-zinc-700 bg-black px-3 py-2 text-sm font-semibold text-white placeholder:text-zinc-600 focus:border-[#dbff5c] focus:ring-0"
+                               required>
+                        <textarea name="description" rows="2" placeholder="Mô tả danh mục"
+                                  class="w-full resize-none border-2 border-zinc-700 bg-black px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-[#dbff5c] focus:ring-0"></textarea>
+                        <button class="btn-press flex w-full items-center justify-center gap-2 bg-[#526600] px-4 py-3 text-[10px] font-bold uppercase tracking-[.12em] text-[#dbff5c] hover:brightness-125">
+                            <span class="material-symbols-outlined" style="font-size:16px">add</span>
+                            Thêm danh mục
+                        </button>
+                    </form>
+
+                    <?php if (empty($categories)): ?>
+                    <p class="border-2 border-zinc-800 p-4 text-sm text-zinc-500">Chưa có danh mục nào.</p>
+                    <?php else: ?>
+                    <div class="space-y-3">
+                        <?php foreach ($categories as $category): ?>
+                        <form method="POST" action="<?= url('Category/edit/' . (int) $category['id']) ?>" class="space-y-2 border-2 border-zinc-800 bg-zinc-950 p-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="font-brand text-[10px] font-bold text-[#dbff5c]">#<?= str_pad((int) $category['id'], 3, '0', STR_PAD_LEFT) ?></span>
+                                <span class="text-[10px] font-bold uppercase tracking-[.12em] text-zinc-500"><?= (int) $category['product_count'] ?> game</span>
+                            </div>
+                            <input type="text" name="name" value="<?= htmlspecialchars($category['name']) ?>"
+                                   class="w-full border-2 border-zinc-700 bg-black px-3 py-2 text-sm font-semibold text-white focus:border-[#dbff5c] focus:ring-0"
+                                   required>
+                            <textarea name="description" rows="2"
+                                      class="w-full resize-none border-2 border-zinc-700 bg-black px-3 py-2 text-xs text-zinc-300 focus:border-[#dbff5c] focus:ring-0"><?= htmlspecialchars($category['description'] ?? '') ?></textarea>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button class="border-2 border-[#526600] px-3 py-2 text-[10px] font-bold uppercase tracking-[.12em] text-[#dbff5c] hover:bg-[#526600]">
+                                    Lưu
+                                </button>
+                                <a href="<?= url('Category/delete/' . (int) $category['id']) ?>"
+                                   onclick="return confirm('Xóa danh mục «<?= htmlspecialchars($category['name']) ?>»? Các game thuộc danh mục này sẽ thành chưa phân loại.')"
+                                   class="border-2 border-[#bb0509] px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[.12em] text-[#ffb4a9] hover:bg-[#bb0509] hover:text-white">
+                                    Xóa
+                                </a>
+                            </div>
+                        </form>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
 

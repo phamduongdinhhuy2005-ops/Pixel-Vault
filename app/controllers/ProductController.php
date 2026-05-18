@@ -132,8 +132,49 @@ class ProductController {
 
     public function admin(): void {
         $products = $this->fetchProducts();
+        $categories = $this->fetchCategories();
         $systemOptions = $this->systemOptions;
         include __DIR__ . '/../views/admin/index.php';
+    }
+
+    public function categoryAdd(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url('Admin'));
+        }
+
+        [$name, $description, $errors] = $this->validateCategoryInput($_POST);
+
+        if (!empty($errors)) {
+            $_SESSION['flash_error'] = implode(' ', $errors);
+            $this->redirect(url('Admin') . '#categories');
+        }
+
+        $this->createCategory($name, $description);
+        $_SESSION['flash_success'] = 'Đã thêm danh mục mới.';
+        $this->redirect(url('Admin') . '#categories');
+    }
+
+    public function categoryEdit(int $id): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url('Admin'));
+        }
+
+        [$name, $description, $errors] = $this->validateCategoryInput($_POST, $id);
+
+        if (!empty($errors)) {
+            $_SESSION['flash_error'] = implode(' ', $errors);
+            $this->redirect(url('Admin') . '#categories');
+        }
+
+        $this->updateCategory($id, $name, $description);
+        $_SESSION['flash_success'] = 'Đã cập nhật danh mục.';
+        $this->redirect(url('Admin') . '#categories');
+    }
+
+    public function categoryDelete(int $id): void {
+        $this->deleteCategory($id);
+        $_SESSION['flash_success'] = 'Đã xóa danh mục. Sản phẩm thuộc danh mục này sẽ chuyển sang trạng thái chưa phân loại.';
+        $this->redirect(url('Admin') . '#categories');
     }
 
     private function loadSystemOptions(): array {
@@ -181,6 +222,18 @@ class ProductController {
         return $products;
     }
 
+    private function fetchCategories(): array {
+        $stmt = $this->db->query(
+            'SELECT c.id, c.name, c.description, COUNT(p.id) AS product_count
+             FROM categories c
+             LEFT JOIN products p ON p.category_id = c.id
+             GROUP BY c.id, c.name, c.description
+             ORDER BY c.id'
+        );
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     private function findProduct(int $id): ?ProductModel {
         $stmt = $this->db->prepare(
             'SELECT p.*, c.name AS category_name
@@ -207,7 +260,7 @@ class ProductController {
             (float) $row['price'],
             array_map(fn(string $image) => $this->imageForDisplay($image), $images),
             [
-                'category' => (string) ($row['category_name'] ?? 'Nội địa'),
+                'category' => (string) ($row['category_name'] ?? 'Chưa phân loại'),
                 'condition' => (string) ($row['product_condition'] ?? 'Đã qua sử dụng'),
                 'resolution' => (string) ($row['resolution'] ?? '256 × 224'),
                 'rom_format' => (string) ($row['rom_format'] ?? '16MB ROM'),
@@ -389,6 +442,53 @@ class ProductController {
         return $id === false ? null : (int) $id;
     }
 
+    private function createCategory(string $name, string $description): void {
+        $stmt = $this->db->prepare(
+            'INSERT INTO categories (id, name, description)
+             VALUES (:id, :name, :description)'
+        );
+        $stmt->execute([
+            'id' => $this->nextAvailableId('categories'),
+            'name' => $name,
+            'description' => $description,
+        ]);
+        $this->resetAutoIncrement('categories');
+    }
+
+    private function updateCategory(int $id, string $name, string $description): void {
+        $stmt = $this->db->prepare(
+            'UPDATE categories
+             SET name = :name, description = :description
+             WHERE id = :id'
+        );
+        $stmt->execute([
+            'id' => $id,
+            'name' => $name,
+            'description' => $description,
+        ]);
+    }
+
+    private function deleteCategory(int $id): void {
+        $stmt = $this->db->prepare('DELETE FROM categories WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $this->resetAutoIncrement('categories');
+    }
+
+    private function categoryNameExists(string $name, ?int $excludeId = null): bool {
+        $sql = 'SELECT COUNT(*) FROM categories WHERE name = :name';
+        $params = ['name' => $name];
+
+        if ($excludeId !== null) {
+            $sql .= ' AND id <> :id';
+            $params['id'] = $excludeId;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
     private function genreIdByName(string $name): ?int {
         $stmt = $this->db->prepare('SELECT id FROM genres WHERE name = :name LIMIT 1');
         $stmt->execute(['name' => $name]);
@@ -398,7 +498,7 @@ class ProductController {
     }
 
     private function nextAvailableId(string $table): int {
-        if (!in_array($table, ['products', 'product_images'], true)) {
+        if (!in_array($table, ['products', 'product_images', 'categories'], true)) {
             throw new InvalidArgumentException('Bảng không được phép cấp ID thủ công.');
         }
 
@@ -420,12 +520,29 @@ class ProductController {
     }
 
     private function resetAutoIncrement(string $table): void {
-        if (!in_array($table, ['products', 'product_images'], true)) {
+        if (!in_array($table, ['products', 'product_images', 'categories'], true)) {
             throw new InvalidArgumentException('Bảng không được phép reset AUTO_INCREMENT.');
         }
 
         $nextId = ((int) $this->db->query("SELECT COALESCE(MAX(id), 0) + 1 FROM {$table}")->fetchColumn());
         $this->db->exec("ALTER TABLE {$table} AUTO_INCREMENT = {$nextId}");
+    }
+
+    private function validateCategoryInput(array $input, ?int $excludeId = null): array {
+        $name = trim((string) ($input['name'] ?? ''));
+        $description = trim((string) ($input['description'] ?? ''));
+        $errors = [];
+
+        $nameLength = function_exists('mb_strlen') ? mb_strlen($name) : strlen($name);
+        if ($name === '') {
+            $errors[] = 'Tên danh mục là bắt buộc.';
+        } elseif ($nameLength < 2 || $nameLength > 100) {
+            $errors[] = 'Tên danh mục phải từ 2 đến 100 ký tự.';
+        } elseif ($this->categoryNameExists($name, $excludeId)) {
+            $errors[] = 'Danh mục này đã tồn tại.';
+        }
+
+        return [$name, $description, $errors];
     }
 
     private function validateProductInput(array $input): array {
