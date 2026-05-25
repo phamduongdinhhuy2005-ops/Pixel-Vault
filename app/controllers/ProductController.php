@@ -152,6 +152,227 @@ class ProductController {
     }
 
     /**
+     * Hien thi gio hang dang luu trong session.
+     */
+    public function cart(): void {
+        $cart = $this->cartItems();
+        $cartTotal = $this->cartTotal($cart);
+        include __DIR__ . '/../views/product/cart.php';
+    }
+
+    /**
+     * Them san pham vao gio hang. Neu san pham da co thi tang so luong.
+     */
+    public function addToCart(int $id): void {
+        $product = $this->findProduct($id);
+
+        if ($product === null) {
+            $this->notFound();
+        }
+
+        if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
+            $_SESSION['cart'] = [];
+        }
+
+        if (isset($_SESSION['cart'][$id])) {
+            $_SESSION['cart'][$id]['quantity']++;
+        } else {
+            $_SESSION['cart'][$id] = $this->cartItemFromProduct($product);
+        }
+
+        $_SESSION['flash_success'] = 'Đã thêm sản phẩm vào giỏ hàng.';
+        if ($this->isFetchRequest()) {
+            http_response_code(204);
+            return;
+        }
+
+        $this->redirect(url('Product/cart'));
+    }
+
+    /**
+     * Cap nhat so luong san pham trong gio hang.
+     */
+    public function updateCart(int $id): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url('Product/cart'));
+        }
+
+        $quantity = max(0, (int) ($_POST['quantity'] ?? 1));
+
+        if (isset($_SESSION['cart'][$id])) {
+            if ($quantity <= 0) {
+                unset($_SESSION['cart'][$id]);
+            } else {
+                $_SESSION['cart'][$id]['quantity'] = $quantity;
+            }
+        }
+
+        if ($this->isFetchRequest()) {
+            http_response_code(204);
+            return;
+        }
+
+        $this->redirect(url('Product/cart'));
+    }
+
+    /**
+     * Xoa mot san pham khoi gio hang.
+     */
+    public function removeFromCart(int $id): void {
+        if (isset($_SESSION['cart'][$id])) {
+            unset($_SESSION['cart'][$id]);
+        }
+
+        if ($this->isFetchRequest()) {
+            http_response_code(204);
+            return;
+        }
+
+        $this->redirect(url('Product/cart'));
+    }
+
+    /**
+     * Hien thi form thanh toan.
+     */
+    public function checkout(): void {
+        $cart = $this->cartItems();
+
+        if (empty($cart)) {
+            $_SESSION['flash_error'] = 'Gio hang dang trong.';
+            $this->redirect(url('Product/cart'));
+        }
+
+        $cartTotal = $this->cartTotal($cart);
+        $checkoutErrors = $_SESSION['checkout_errors'] ?? [];
+        $checkoutOld = array_merge(['name' => '', 'phone' => '', 'phone2' => '', 'address' => '', 'note' => ''], $_SESSION['checkout_old'] ?? []);
+        unset($_SESSION['checkout_errors'], $_SESSION['checkout_old']);
+
+        include __DIR__ . '/../views/product/checkout.php';
+    }
+
+    /**
+     * Ghi don hang va chi tiet don hang vao database.
+     */
+    public function processCheckout(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(url('Product/checkout'));
+        }
+
+        $cart = $this->cartItems();
+        if (empty($cart)) {
+            $_SESSION['flash_error'] = 'Gio hang dang trong.';
+            $this->redirect(url('Product/cart'));
+        }
+
+        $name    = trim((string) ($_POST['name']    ?? ''));
+        $phone   = trim((string) ($_POST['phone']   ?? ''));
+        $phone2  = trim((string) ($_POST['phone2']  ?? ''));
+        $address = trim((string) ($_POST['address'] ?? ''));
+        $note    = trim((string) ($_POST['note']    ?? ''));
+        $errors  = [];
+
+        if ($name === '') {
+            $errors[] = 'Vui lòng nhập họ tên.';
+        }
+
+        if ($phone === '') {
+            $errors[] = 'Vui lòng nhập số điện thoại.';
+        } elseif (!preg_match('/^[0-9+\-\s]{8,20}$/', $phone)) {
+            $errors[] = 'Số điện thoại không hợp lệ (chỉ chứa số, dấu +, -, khoảng trắng; 8–20 ký tự).';
+        }
+
+        if ($phone2 !== '' && !preg_match('/^[0-9+\-\s]{8,20}$/', $phone2)) {
+            $errors[] = 'Số điện thoại phụ không hợp lệ.';
+        }
+
+        if ($address === '') {
+            $errors[] = 'Vui lòng nhập địa chỉ giao hàng.';
+        }
+
+        if (!empty($errors)) {
+            $_SESSION['checkout_errors'] = $errors;
+            $_SESSION['checkout_old'] = compact('name', 'phone', 'phone2', 'address', 'note');
+            $this->redirect(url('Product/checkout'));
+        }
+
+        $this->db->beginTransaction();
+
+        try {
+            $orderId = $this->generateOrderId();
+            $stmt = $this->db->prepare(
+                'INSERT INTO orders (id, name, phone, phone2, address, note)
+                 VALUES (:id, :name, :phone, :phone2, :address, :note)'
+            );
+            $stmt->execute([
+                'id'      => $orderId,
+                'name'    => $name,
+                'phone'   => $phone,
+                'phone2'  => $phone2 !== '' ? $phone2 : null,
+                'address' => $address,
+                'note'    => $note !== '' ? $note : null,
+            ]);
+
+            $detailStmt = $this->db->prepare(
+                'INSERT INTO order_details (order_id, product_id, quantity, price)
+                 VALUES (:order_id, :product_id, :quantity, :price)'
+            );
+
+            foreach ($cart as $productId => $item) {
+                $detailStmt->execute([
+                    'order_id' => $orderId,
+                    'product_id' => $productId,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                ]);
+            }
+
+            $_SESSION['last_order_id'] = $orderId;
+            $_SESSION['last_order_items'] = $cart;
+            $_SESSION['last_order_total'] = $this->cartTotal($cart);
+            unset($_SESSION['cart']);
+            $this->db->commit();
+
+            $this->redirect(url('Product/orderConfirmation'));
+        } catch (Throwable $exception) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            $_SESSION['checkout_errors'] = ['Không thể xử lý đơn hàng: ' . $exception->getMessage()];
+            $_SESSION['checkout_old'] = compact('name', 'phone', 'phone2', 'address', 'note');
+            $this->redirect(url('Product/checkout'));
+        }
+    }
+
+    /**
+     * Hien thi trang xac nhan sau khi dat hang thanh cong.
+     */
+    public function orderConfirmation(): void {
+        $orderId = (int) ($_SESSION['last_order_id'] ?? 0);
+        $orderItems = $_SESSION['last_order_items'] ?? [];
+        $orderTotal = (float) ($_SESSION['last_order_total'] ?? 0);
+        unset($_SESSION['last_order_id'], $_SESSION['last_order_items'], $_SESSION['last_order_total']);
+        include __DIR__ . '/../views/product/orderConfirmation.php';
+    }
+
+    /**
+     * Hiển thị danh sách tất cả đơn hàng đã đặt.
+     */
+    public function orderList(): void {
+        $stmt = $this->db->query(
+            'SELECT o.id, o.name, o.phone, o.phone2, o.address, o.note, o.created_at,
+                    COALESCE(SUM(od.quantity * od.price), 0) AS total_amount,
+                    COUNT(od.id) AS item_count
+             FROM orders o
+             LEFT JOIN order_details od ON od.order_id = o.id
+             GROUP BY o.id
+             ORDER BY o.id DESC'
+        );
+        $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        include __DIR__ . '/../views/product/orderList.php';
+    }
+
+    /**
      * Hiển thị trang quản trị gồm danh sách sản phẩm và quản lý danh mục.
      */
     public function admin(): void {
@@ -236,8 +457,89 @@ class ProductController {
     }
 
     /**
+     * Tao mot dong gio hang tu doi tuong san pham.
+     */
+    private function cartItemFromProduct(ProductModel $product): array {
+        return [
+            'name' => $product->getName(),
+            'price' => $product->getPrice(),
+            'quantity' => 1,
+            'image' => $product->getPrimaryImage() ?? '',
+        ];
+    }
+
+    /**
+     * Lay gio hang da duoc lam sach tu session.
+     */
+    private function cartItems(): array {
+        if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
+            return [];
+        }
+
+        $cart = [];
+
+        foreach ($_SESSION['cart'] as $productId => $item) {
+            $productId = (int) $productId;
+            $quantity = max(1, (int) ($item['quantity'] ?? 1));
+            $price = max(0, (float) ($item['price'] ?? 0));
+            $name = trim((string) ($item['name'] ?? ''));
+
+            if ($productId <= 0 || $name === '' || $price <= 0) {
+                continue;
+            }
+
+            $cart[$productId] = [
+                'name' => $name,
+                'price' => $price,
+                'quantity' => $quantity,
+                'image' => trim((string) ($item['image'] ?? '')),
+            ];
+        }
+
+        $_SESSION['cart'] = $cart;
+        return $cart;
+    }
+
+    /**
+     * Tinh tong tien gio hang.
+     */
+    private function cartTotal(array $cart): float {
+        return array_reduce(
+            $cart,
+            fn(float $total, array $item): float => $total + ($item['price'] * $item['quantity']),
+            0.0
+        );
+    }
+
+    /**
      * Ghép dữ liệu SQL, ảnh và thể loại thành một đối tượng ProductModel.
      */
+    /**
+     * Tao ID don hang nho nhat con trong trong day so 1, 2, 3...
+     */
+    private function isFetchRequest(): bool {
+        return strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'fetch';
+    }
+
+    private function generateOrderId(): int {
+        $stmt = $this->db->query('SELECT id FROM orders ORDER BY id');
+        $expectedId = 1;
+
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $currentId) {
+            $currentId = (int) $currentId;
+
+            if ($currentId > $expectedId) {
+                return $expectedId;
+            }
+
+            if ($currentId === $expectedId) {
+                $expectedId++;
+            }
+        }
+
+        return $expectedId;
+    }
+
     private function hydrateProduct(array $row, array $images, array $genres): ProductModel {
         return new ProductModel(
             (int) $row['id'],
@@ -385,6 +687,7 @@ class ProductController {
 
     /**
      * Ghi lại toàn bộ 3 slot ảnh của sản phẩm trong bảng product_images.
+     * Ảnh chính (is_primary = 1) là slot không rỗng đầu tiên, bất kể vị trí index.
      */
     private function replaceProductImages(int $productId, array $images): void {
         $stmt = $this->db->prepare('DELETE FROM product_images WHERE product_id = :product_id');
@@ -397,6 +700,15 @@ class ProductController {
 
         $images = array_slice(array_pad($images, self::IMAGE_SLOT_COUNT, ''), 0, self::IMAGE_SLOT_COUNT);
 
+        // Xác định index của slot không rỗng đầu tiên để làm ảnh chính
+        $primaryIndex = null;
+        foreach ($images as $index => $image) {
+            if ($image !== '') {
+                $primaryIndex = $index;
+                break;
+            }
+        }
+
         foreach ($images as $index => $image) {
             if ($image === '') {
                 continue;
@@ -404,14 +716,13 @@ class ProductController {
 
             $stmt->execute([
                 'product_id' => $productId,
-                'image_url' => $this->imageForDatabase($image),
+                'image_url'  => $this->imageForDatabase($image),
                 'image_slot' => $index + 1,
-                'is_primary' => $index === 0 ? 1 : 0,
+                'is_primary' => $index === $primaryIndex ? 1 : 0,
             ]);
         }
 
     }
-
     /**
      * Ghi lại các thể loại của sản phẩm trong bảng trung gian product_genres.
      */

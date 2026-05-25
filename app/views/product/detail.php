@@ -67,18 +67,9 @@ $primaryImage = $product->getPrimaryImage();
         }
     </style>
 </head>
-<body class="bg-[#fbf9f8] text-[#1b1c1c] dot-matrix min-h-screen">
+<body class="min-h-screen flex flex-col bg-[#fbf9f8] text-[#1b1c1c]" style="background-image: radial-gradient(#cac6bc 1px, transparent 1px); background-size: 8px 8px;">
 
-<!-- ─── NAVIGATION ─── -->
-<nav class="bg-[#fbf9f8] border-b-4 border-[#1b1c1c] shadow-[0px_4px_0px_0px_#1b1c1c] sticky top-0 z-50">
-    <div class="max-w-[1200px] mx-auto px-4 md:px-12 py-4 flex justify-between items-center">
-        <a href="<?= url() ?>" class="font-brand text-2xl font-bold italic text-[#bb0509] tracking-tighter">PIXEL_VAULT</a>
-        <a href="<?= url() ?>" class="nav-link flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.12em] text-[#1b1c1c] hover:text-[#bb0509] transition-colors">
-            <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>
-            VỀ CỬA HÀNG
-        </a>
-    </div>
-</nav>
+<?php $activePage = 'home'; include __DIR__ . '/../shares/siteHeader.php'; ?>
 
 <main class="max-w-[1200px] mx-auto px-4 md:px-12 py-12">
 
@@ -154,11 +145,11 @@ $primaryImage = $product->getPrimaryImage();
                         <?= number_format($product->getPrice(), 0, ',', '.') ?>đ
                     </span>
                 </div>
-                <button onclick='addToCart(<?= $product->getID() ?>, <?= json_encode($product->getName(), JSON_HEX_APOS | JSON_HEX_QUOT) ?>, <?= $product->getPrice() ?>, <?= json_encode($primaryImage ?? '', JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'
+                <a href="<?= url('Product/addToCart/' . $product->getID()) ?>"
                         class="w-full btn-press bg-[#bb0509] text-white py-5 border-4 border-[#1b1c1c] shadow-brutal font-bold uppercase tracking-[.12em] text-sm flex items-center justify-center gap-3">
                     <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;font-size:24px">videogame_asset</span>
                     THÊM VÀO GIỎ HÀNG
-                </button>
+                </a>
                 <div id="cart-detail-message" class="hidden mt-4 border-2 border-[#526600] bg-[#dbff5c] px-4 py-3 text-[12px] font-bold text-[#3d4c00] leading-relaxed"></div>
             </div>
 
@@ -181,8 +172,8 @@ $primaryImage = $product->getPrimaryImage();
                     foreach ($specs as [$label, $val]):
                     ?>
                     <div class="flex justify-between items-center px-6 py-3">
-                        <span class="text-[11px] font-bold uppercase tracking-[.1em] text-[#49473f]"><?= $label ?></span>
-                        <span class="text-sm font-semibold text-[#1b1c1c]"><?= $val ?></span>
+                        <span class="text-[11px] font-bold uppercase tracking-[.1em] text-[#49473f]"><?= htmlspecialchars($label) ?></span>
+                        <span class="text-sm font-semibold text-[#1b1c1c]"><?= htmlspecialchars($val) ?></span>
                     </div>
                     <?php endforeach; ?>
                 </div>
@@ -216,20 +207,7 @@ $primaryImage = $product->getPrimaryImage();
     </div>
 </main>
 
-<!-- ─── FOOTER ─── -->
-<footer class="bg-[#e4e2e1] border-t-4 border-[#1b1c1c] mt-24">
-    <div class="max-w-[1200px] mx-auto px-4 md:px-12 py-10 flex flex-col md:flex-row justify-between items-center gap-6">
-        <div class="font-brand text-lg font-bold italic text-[#1b1c1c]">PIXEL_VAULT</div>
-        <div class="flex flex-wrap justify-center gap-6 text-[10px] font-bold uppercase tracking-[.12em]">
-            <a href="<?= url() ?>#policy" class="text-[#49473f] hover:text-[#526600] underline transition-colors">Chính Sách</a>
-            <a href="<?= url() ?>#terms" class="text-[#49473f] hover:text-[#526600] underline transition-colors">Điều Khoản</a>
-            <a href="<?= url() ?>#support" class="text-[#49473f] hover:text-[#526600] underline transition-colors">Hỗ Trợ</a>
-        </div>
-        <div class="text-[10px] text-[#49473f] text-center md:text-right font-medium">
-            © 1989–2026 PIXEL VAULT. MỌI QUYỀN ĐƯỢC BẢO LƯU.
-        </div>
-    </div>
-</footer>
+<?php include __DIR__ . '/../shares/siteFooter.php'; ?>
 
 <script>
 function selectProductImage(button, image) {

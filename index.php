@@ -33,6 +33,22 @@ if ($section === 'product') {
         $productController->edit($id);
     } elseif ($action === 'delete') {
         $productController->delete($id);
+    } elseif ($action === 'cart') {
+        $productController->cart();
+    } elseif ($action === 'addtocart') {
+        $productController->addToCart($id);
+    } elseif ($action === 'updatecart') {
+        $productController->updateCart($id);
+    } elseif ($action === 'removefromcart') {
+        $productController->removeFromCart($id);
+    } elseif ($action === 'checkout') {
+        $productController->checkout();
+    } elseif ($action === 'processcheckout') {
+        $productController->processCheckout();
+    } elseif ($action === 'orderconfirmation') {
+        $productController->orderConfirmation();
+    } elseif ($action === 'orderlist') {
+        $productController->orderList();
     } elseif ($action === 'detail') {
         $productController->detail($id);
     } else {

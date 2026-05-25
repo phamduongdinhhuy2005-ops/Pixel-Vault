@@ -14,6 +14,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=Space+Mono:ital,wght@0,400;0,700;1,700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <style>
+        html {
+            font-size: 88%;
+        }
+        @media (max-width: 640px) {
+            html {
+                font-size: 92%;
+            }
+        }
         body { font-family: 'Be Vietnam Pro', sans-serif; line-height: 1.5; }
         .font-brand { font-family: 'Space Mono', monospace; }
         h1, h2, h3, .font-brand { line-height: 1.25; }
@@ -240,67 +248,5 @@
     </div>
 </footer>
 
-<script>
-const imageInput = document.getElementById('image-input');
-const imagePreview = document.getElementById('image-preview');
-
-if (imageInput && imagePreview) {
-    const pendingFiles = [];
-
-    const fileKey = file => `${file.name}-${file.size}-${file.lastModified}`;
-
-    const syncInputFiles = () => {
-        const transfer = new DataTransfer();
-        pendingFiles.forEach(file => transfer.items.add(file));
-        imageInput.files = transfer.files;
-    };
-
-    const renderPreview = () => {
-        imagePreview.innerHTML = '';
-        imagePreview.classList.toggle('hidden', pendingFiles.length === 0);
-
-        pendingFiles.forEach((file, index) => {
-            if (!file.type.startsWith('image/')) return;
-
-            const reader = new FileReader();
-            reader.onload = event => {
-                const card = document.createElement('div');
-                const image = document.createElement('img');
-                const name = document.createElement('p');
-                const removeButton = document.createElement('button');
-
-                card.className = 'image-preview-card';
-                image.src = event.target.result;
-                image.alt = `Ảnh xem trước ${index + 1}`;
-                name.className = 'mt-2 truncate font-brand text-[10px] font-bold text-[#49473f]';
-                name.textContent = file.name;
-                removeButton.type = 'button';
-                removeButton.className = 'mt-2 w-full border-2 border-[#bb0509] px-2 py-1 text-[10px] font-bold uppercase tracking-[.12em] text-[#bb0509] hover:bg-[#ffdad6]';
-                removeButton.textContent = 'Gỡ ảnh tạm';
-                removeButton.addEventListener('click', () => {
-                    pendingFiles.splice(index, 1);
-                    syncInputFiles();
-                    renderPreview();
-                });
-
-                card.append(image, name, removeButton);
-                imagePreview.appendChild(card);
-            };
-            reader.readAsDataURL(file);
-        });
-    };
-
-    imageInput.addEventListener('change', () => {
-        Array.from(imageInput.files || []).forEach(file => {
-            if (!file.type.startsWith('image/')) return;
-            if (pendingFiles.some(item => fileKey(item) === fileKey(file))) return;
-            pendingFiles.push(file);
-        });
-
-        syncInputFiles();
-        renderPreview();
-    });
-}
-</script>
 </body>
 </html>

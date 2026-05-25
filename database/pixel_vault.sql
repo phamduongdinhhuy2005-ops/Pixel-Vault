@@ -169,6 +169,44 @@ LOCK TABLES `products` WRITE;
 INSERT INTO `products` VALUES (1,'Huyền thoại Pixel 1989','Huyền thoại Pixel 1989 là một tựa game phiêu lưu hành động 8-bit mang phong cách dark-fantasy retro. \r\n\r\nNgười chơi hóa thân thành chiến binh cuối cùng của một vương quốc pixel đã mục nát, bước qua hầm ngục bị nguyền rủa, lâu đài đổ nát và vùng đất phủ bóng tối để đối đầu với rồng xanh cổ đại — sinh vật được cho là nguồn gốc của lời nguyền đang nuốt chửng thế giới.',189000.00,2,'Mới','320 × 240','16MB ROM','1 người chơi','Nhật Bản, Việt Nam, Anh, Mỹ','2026-05-18 06:42:54','2026-05-18 06:56:22'),(2,'Pixel Vault: The Lost Save','Trong một hệ máy cũ, có một file save chưa từng được hoàn thành. Người chơi bước vào hành trình khôi phục ký ức của một nhân vật pixel bị mắc kẹt giữa các màn chơi đã hỏng. Mỗi vùng đất là một phần dữ liệu bị phân mảnh, chứa những câu chuyện buồn, những lựa chọn cũ và một cái kết đã bị giấu đi.',170000.00,2,'Đã qua sử dụng','256 × 240','16MB ROM','1 người chơi','US, Việt Nam, Nga','2026-05-18 06:42:54','2026-05-18 06:58:04'),(3,'Pixel Vault: Forgotten Arcade','Một tiệm arcade cũ xuất hiện vào lúc nửa đêm, chỉ mở cửa cho những người từng bỏ quên điều gì đó trong quá khứ. \r\n\r\nMỗi máy game bên trong là những ký ức rời rạc được mã hóa bằng pixel những con số và các câu đố hóc búa. \r\n\r\nNgười chơi phải vượt qua các trò chơi kỳ lạ để tìm ra lý do vì sao mình được chọn.',219000.00,1,'Mới','426 × 240','16MB ROM','1 người chơi','EU, Nhật Bản, Hàn Quốc','2026-05-18 06:42:54','2026-05-18 07:05:02'),(4,'Pixel Vault: Crimson ROM','Một file ROM màu đỏ đột nhiên xuất hiện trên mạng đi kèm với lời đồn rằng ai chơi đến màn cuối sẽ nhìn thấy “sự thật phía sau thế giới pixel”.\r\n\r\nBạn chỉ là một trong số những người chơi tò mò tải nó về và bị kéo vào một cuộc phiêu lưu kỳ lạ, nơi ranh giới giữa game, ký ức và thực tại dần tan chảy.',199000.00,1,'Đã qua sử dụng','320 × 240','16MB ROM','2 người chơi','Nga, Singapore, US, UK','2026-05-18 06:42:54','2026-05-18 07:03:29'),(5,'Pixel Vault: The Eiffel Rose','Tại Paris hoa lệ, trước khi qua đời, một họa sĩ già bí ẩn đã để lại tác phẩm cuối cùng của mình — một bức tranh pixel nổi tiếng mô tả tháp Eiffel nở rộ giữa những đóa hồng gai dưới bầu trời sao, cùng hình bóng một cô gái không ai rõ danh tính.\r\n\r\nBức tranh nhanh chóng trở thành kiệt tác, được trưng bày tại nhiều bảo tàng danh tiếng, rồi đột ngột biến mất không để lại bất kỳ dấu vết nào. Nhiều năm sau, nó bất ngờ xuất hiện trở lại tại hiện trường của một vụ án mạng kỳ lạ: dưới bầu trời sao, cạnh thi thể lạnh ngắt của một người quản gia và giữa những cánh hồng gai nhuốm máu.\r\n\r\nNgười chơi vào vai một thám tử tập sự bị cuốn vào vụ án bí ẩn ấy. Lần theo những manh mối ẩn sau bức tranh thất lạc, bạn phải khám phá mối liên hệ giữa cô gái trong tranh, cái chết của người quản gia và bí mật đen tối đang ẩn mình sau vẻ đẹp lộng lẫy của Paris — trước khi thành phố ấy một lần nữa bị nhuộm đỏ bởi những cánh hoa hồng.',169000.00,1,'Đã qua sử dụng','320 × 240','8MB ROM','1 người chơi','Pháp, Việt Nam, US, UK','2026-05-18 09:00:47','2026-05-18 09:00:47'),(6,'Pixel Vault: Kingdom Washed Away','Từng có một vương quốc pixel rực rỡ tồn tại dưới sự ban phước của thực thể cổ đại mang tên The Unknown. Nhưng mọi thứ đã sụp đổ khi một màn mưa kỳ lạ kéo đến, cuốn trôi lịch sử, ký ức và sự sống, để lại phía sau một thế giới mục nát đang dần tan vào hư vô.\r\n\r\nNgười chơi vào vai một kẻ thất lạc không còn nhớ rõ quá khứ của mình, chỉ mang theo thanh kiếm gỉ sét và một chiếc nhẫn bị lãng quên. \r\n\r\nTrên hành trình băng qua những tàn tích bị mưa xóa nhòa, người chơi phải lần theo dấu vết của kẻ đã tạo ra cơn mưa, đồng thời khám phá sự thật đen tối phía sau The Unknown và lời nguyền đang nuốt chửng vương quốc.',245000.00,3,'Mới','426 × 240','24MB ROM','1 người chơi','Việt Nam, US, UK, Nhật Bản','2026-05-18 07:21:49','2026-05-18 07:21:49'),(9,'Pixel Vault: The Abyss','Pixel Vault: The Abyss là một cuộc thám hiểm dark-fantasy vào miệng hố khổng lồ nằm giữa một quốc đảo cổ. \r\n\r\nNgười chơi vào vai một nhà thám hiểm lún sâu vào The Abyss để trục vớt di vật thất lạc và chinh phục các tầng sâu trong truyền thuyết. \r\n\r\nNhưng càng đi xuống, lời nguyền càng trở nên rõ ràng: những kẻ chạm tới tầng 6 không thể trở về, và dưới đáy vực có thể không phải kho báu, mà là sự thật mà nhân loại chưa từng nên tìm thấy.',175000.00,3,'Mới','320 × 240','16MB ROM','1 người chơi','Nhật Bản, Việt Nam','2026-05-18 08:11:11','2026-05-18 08:11:11'),(10,'Pixel Vault: The Matrix','Pixel Vault: The Matrix lấy bối cảnh trong một thành phố cyber đen tối, nơi giá trị của con người không còn được đo bằng lòng nhân hậu, ký ức hay linh hồn, mà bằng những con số trên hợp đồng bạc tỷ của các tập đoàn công nghệ.\r\n\r\nNgười chơi vào vai một sát thủ cyborg chuyên thực hiện các nhiệm vụ thanh trừng, ám sát và dọn dẹp những bí mật bẩn thỉu cho các tập đoàn. \r\n\r\nNhưng sau một phi vụ thất bại, bạn bị chính những kẻ thuê mình phản bội, tiêm vào cơ thể một loại thuốc phá hủy hệ thần kinh nhân tạo, khiến bộ não cyborg vỡ vụn và tâm trí mắc kẹt trong một mê cung dữ liệu mang tên The Matrix.\r\n\r\nTỉnh dậy từ đống tàn dư của chính mình, bạn không còn là một cỗ máy hoàn hảo. Bộ não công nghệ của bạn giờ đầy lỗ hổng, lỗi hệ thống và những vết nứt không thể vá. Nhưng chính các lỗi đó lại trở thành vũ khí: bạn có thể dịch chuyển qua thành phố bằng glitch, xé rách các lớp bảo mật, bẻ cong không gian dữ liệu và xuất hiện ở những nơi không ai có thể truy vết.\r\n\r\nVới thanh katana, một tâm trí vụn vỡ và khả năng khai thác những lỗ hổng trong chính bộ não mình, bạn bắt đầu cuộc thanh toán đẫm máu chống lại các tập đoàn đã tạo ra, sử dụng rồi vứt bỏ bạn. Đêm nay, thành phố cyber sẽ không còn vận hành theo luật của chúng nữa.',230000.00,1,'Đã qua sử dụng','426 × 240','24MB ROM','1 người chơi','US, UK, Pháp','2026-05-18 08:31:09','2026-05-18 08:31:09');
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `orders`
+--
+
+DROP TABLE IF EXISTS `order_details`;
+DROP TABLE IF EXISTS `orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `orders` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `address` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `order_details`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_details` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `order_id` int NOT NULL,
+  `product_id` int NOT NULL,
+  `quantity` int NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_order_details_order` (`order_id`),
+  KEY `fk_order_details_product` (`product_id`),
+  CONSTRAINT `fk_order_details_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_order_details_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

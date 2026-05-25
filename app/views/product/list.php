@@ -7,6 +7,7 @@ $totalFilteredProducts = $totalFilteredProducts ?? count($products);
 $currentPage = $currentPage ?? 1;
 $totalPages = $totalPages ?? 1;
 $perPage = $perPage ?? 4;
+$cartQuantity = array_sum(array_map(fn($item) => (int) ($item['quantity'] ?? 0), $_SESSION['cart'] ?? []));
 $pageUrl = function (int $page) use ($filters): string {
     $params = array_filter($filters, fn($value) => $value !== '');
     $params['page'] = $page;
@@ -619,56 +620,7 @@ $pageUrl = function (int $page) use ($filters): string {
     </div>
 </div>
 
-<!-- ─── NAVIGATION ─── -->
-<nav class="bg-[#fbf9f8] border-b-4 border-[#1b1c1c] shadow-[0px_4px_0px_0px_#1b1c1c] sticky top-0 z-50">
-
-    <!-- Ticker bar -->
-    <div class="ticker-viewport bg-[#1b1c1c] text-[#dbff5c] py-1.5">
-        <div class="ticker-track font-brand text-[9px] font-bold uppercase tracking-[.15em]" aria-hidden="true">
-            <?php $tickerText = '★ PIXEL VAULT - RETRO GAMING STORE · HÀNG CỔ ĐIỂN CHÍNH HÃNG · BĂNG GAME 8-BIT · MÁY CHƠI GAME RETRO · VẬN CHUYỂN TOÀN QUỐC · CHẤT LƯỢNG TỪ NĂM 1989'; ?>
-            <span class="ticker-item"><?= htmlspecialchars($tickerText) ?></span>
-            <span class="ticker-item"><?= htmlspecialchars($tickerText) ?></span>
-            <span class="ticker-item"><?= htmlspecialchars($tickerText) ?></span>
-            <span class="ticker-item"><?= htmlspecialchars($tickerText) ?></span>
-        </div>
-    </div>
-
-    <!-- Main row -->
-    <div class="max-w-[1200px] mx-auto px-4 md:px-12 py-4 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <a href="<?= url() ?>" class="font-brand text-xl sm:text-2xl font-bold italic text-[#bb0509] tracking-tighter">PIXEL_VAULT</a>
-            <span class="hidden md:block text-[10px] text-[#49473f] font-medium border-l-2 border-[#cac6bc] pl-4 leading-tight">
-                Retro Gaming<br>since 1989
-            </span>
-        </div>
-
-        <div class="hidden md:flex gap-8 items-center">
-            <a href="<?= url() ?>"       class="nav-link text-[#bb0509] text-[11px] font-bold uppercase tracking-[.12em] underline decoration-4 underline-offset-4">Cửa Hàng</a>
-            <button onclick="openModal('modal-leaderboard')" class="nav-link text-[#1b1c1c] text-[11px] font-bold uppercase tracking-[.12em] hover:text-[#bb0509] transition-colors">Bảng Điểm</button>
-            <button onclick="openModal('modal-about')"       class="nav-link text-[#1b1c1c] text-[11px] font-bold uppercase tracking-[.12em] hover:text-[#bb0509] transition-colors">Giới Thiệu</button>
-            <a href="<?= url('Admin') ?>" class="nav-link text-[#1b1c1c] text-[11px] font-bold uppercase tracking-[.12em] hover:text-[#bb0509] transition-colors">Quản Trị</a>
-        </div>
-
-        <div class="flex items-center gap-3">
-            <button type="button" onclick="toggleMobileMenu()" class="mobile-icon-button md:hidden nav-link text-[#1b1c1c]" aria-label="Mở menu" aria-expanded="false" id="mobile-menu-button">
-                <span class="material-symbols-outlined" style="font-size:22px">menu</span>
-            </button>
-            <button onclick="openCart()" class="mobile-icon-button md:border-0 md:bg-transparent md:w-auto md:h-auto nav-link relative text-[#615e57] hover:text-[#bb0509] transition-colors" aria-label="Mở giỏ hàng">
-                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;font-size:28px">shopping_cart</span>
-                <span id="cart-badge" class="hidden absolute -top-2 -right-2 w-5 h-5 bg-[#bb0509] text-white text-[9px] font-bold rounded-full items-center justify-center border-2 border-[#1b1c1c]">0</span>
-            </button>
-        </div>
-    </div>
-
-    <div id="mobile-menu" class="mobile-menu md:hidden bg-[#fbf9f8]">
-        <div class="px-4 py-4 grid grid-cols-2 gap-3">
-            <a href="<?= url() ?>" class="border-2 border-[#1b1c1c] bg-white px-3 py-3 text-center text-[10px] font-bold uppercase tracking-[.12em] text-[#bb0509]">Cửa hàng</a>
-            <button onclick="openModal('modal-leaderboard')" class="border-2 border-[#1b1c1c] bg-white px-3 py-3 text-center text-[10px] font-bold uppercase tracking-[.12em]">Bảng điểm</button>
-            <button onclick="openModal('modal-about')" class="border-2 border-[#1b1c1c] bg-white px-3 py-3 text-center text-[10px] font-bold uppercase tracking-[.12em]">Giới thiệu</button>
-            <a href="<?= url('Admin') ?>" class="border-2 border-[#1b1c1c] bg-white px-3 py-3 text-center text-[10px] font-bold uppercase tracking-[.12em]">Quản trị</a>
-        </div>
-    </div>
-</nav>
+<?php $activePage = 'home'; include __DIR__ . '/../shares/siteHeader.php'; ?>
 
 <main class="max-w-[1200px] mx-auto px-4 md:px-12 py-8 md:py-12 space-y-16 md:space-y-24">
 
@@ -681,7 +633,7 @@ $pageUrl = function (int $page) use ($filters): string {
 
             <!-- FIX applied via hero-title class -->
             <h1 class="hero-title text-3xl md:text-5xl font-extrabold uppercase bg-[#fbf9f8] inline-block border-4 border-[#1b1c1c] px-4 shadow-brutal-lg">
-                Đưa ký ức tuổi thơ<br>trở lại với bạn
+                Ký ức tuổi thơ<br>trở lại
             </h1>
 
             <p class="text-base md:text-lg text-[#49473f] bg-[#fbf9f8] p-4 border-2 border-[#cac6bc] shadow-brutal-sm max-w-lg leading-relaxed">
@@ -863,8 +815,8 @@ $pageUrl = function (int $page) use ($filters): string {
 
                         <div class="p-5 flex-1 flex flex-col bg-[#fbf9f8]">
                             <h3 class="font-brand text-lg font-bold uppercase leading-snug mb-2 line-clamp-2"><?= htmlspecialchars($product->getName()) ?></h3>
-                            <p class="text-sm text-[#49473f] leading-relaxed flex-1 mb-4"
-                               style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+                                     <p class="text-sm text-[#49473f] leading-relaxed flex-1 mb-4"
+                                         style="display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
                                 <?= htmlspecialchars($product->getDescription() ?: 'Tựa game retro kinh điển với đồ họa pixel và gameplay hấp dẫn không thể bỏ lỡ.') ?>
                             </p>
 
@@ -896,11 +848,11 @@ $pageUrl = function (int $page) use ($filters): string {
                             <div class="border-t-2 border-dashed border-[#cac6bc] pt-4 space-y-3">
                                 <div class="flex justify-between items-center">
                                     <span class="font-brand text-2xl font-bold text-[#bb0509]"><?= number_format($product->getPrice(), 0, ',', '.') ?>đ</span>
-                                    <button onclick='addToCart(<?= $product->getID() ?>, <?= json_encode($product->getName(), JSON_HEX_APOS | JSON_HEX_QUOT) ?>, <?= $product->getPrice() ?>, <?= json_encode($primaryImage ?? '', JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'
+                                    <a href="<?= url('Product/addToCart/' . $product->getID()) ?>"
                                        class="icon-buy bg-[#bb0509] text-white border-2 border-[#1b1c1c] flex items-center justify-center transition-all hover:-translate-y-0.5 hover:-translate-x-0.5"
                                        aria-label="Thêm vào giỏ hàng">
                                         <span class="material-symbols-outlined" style="font-size:22px">add_shopping_cart</span>
-                                    </button>
+                                    </a>
                                 </div>
                                 <div class="flex gap-2">
                                     <a href="<?= url('Product/detail/' . $product->getID()) ?>"
@@ -917,18 +869,22 @@ $pageUrl = function (int $page) use ($filters): string {
                     <?php endforeach; ?>
                 </div>
                 <?php if ($totalPages > 1): ?>
+                <?php $paginationClick = "event.preventDefault(); loadFilteredProducts(this.href.replace(/#.*$/, '')).finally(() => document.getElementById('games')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));"; ?>
                 <nav class="mt-10 flex flex-wrap items-center justify-center gap-2" aria-label="Phân trang sản phẩm">
                     <a href="<?= htmlspecialchars($pageUrl(max(1, $currentPage - 1))) ?>#games"
+                       onclick="<?= htmlspecialchars($paginationClick, ENT_QUOTES, 'UTF-8') ?>"
                        class="pagination-link inline-flex h-10 min-w-10 items-center justify-center border-4 border-[#1b1c1c] bg-[#fbf9f8] px-3 font-brand text-[10px] font-bold uppercase tracking-[.12em] shadow-brutal-xs transition-all hover:bg-[#e4e2e1] <?= $currentPage <= 1 ? 'pointer-events-none opacity-40' : '' ?>">
                         ←
                     </a>
                     <?php for ($page = 1; $page <= $totalPages; $page++): ?>
                     <a href="<?= htmlspecialchars($pageUrl($page)) ?>#games"
+                       onclick="<?= htmlspecialchars($paginationClick, ENT_QUOTES, 'UTF-8') ?>"
                        class="pagination-link inline-flex h-10 min-w-10 items-center justify-center border-4 border-[#1b1c1c] px-3 font-brand text-sm font-bold shadow-brutal-xs transition-all <?= $page === $currentPage ? 'bg-[#bb0509] text-white' : 'bg-[#fbf9f8] hover:bg-[#dbff5c]' ?>">
                         <?= $page ?>
                     </a>
                     <?php endfor; ?>
                     <a href="<?= htmlspecialchars($pageUrl(min($totalPages, $currentPage + 1))) ?>#games"
+                       onclick="<?= htmlspecialchars($paginationClick, ENT_QUOTES, 'UTF-8') ?>"
                        class="pagination-link inline-flex h-10 min-w-10 items-center justify-center border-4 border-[#1b1c1c] bg-[#fbf9f8] px-3 font-brand text-[10px] font-bold uppercase tracking-[.12em] shadow-brutal-xs transition-all hover:bg-[#e4e2e1] <?= $currentPage >= $totalPages ? 'pointer-events-none opacity-40' : '' ?>">
                         →
                     </a>
@@ -941,77 +897,7 @@ $pageUrl = function (int $page) use ($filters): string {
     </section>
 </main>
 
-<!-- ─── FOOTER ─── -->
-<footer class="bg-[#1b1c1c] border-t-4 border-[#bb0509] mt-24">
-
-    <!-- Upper footer -->
-    <div class="max-w-[1200px] mx-auto px-4 md:px-12 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
-
-        <!-- Brand -->
-        <div class="space-y-4">
-            <div class="font-brand text-2xl font-bold italic text-[#bb0509]">PIXEL_VAULT</div>
-            <p class="text-sm text-zinc-400 leading-relaxed max-w-xs">Cửa hàng game retro chính hãng. Đưa ký ức tuổi thơ trở lại với những băng game cổ điển 8-bit.</p>
-            <div class="flex gap-3 pt-2">
-                <?php foreach ([['videogame_asset','FB'],['photo_camera','IG'],['chat_bubble','ZALO']] as [$ic,$lb]): ?>
-                <span class="inline-flex items-center gap-1.5 bg-zinc-800 border-2 border-zinc-600 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:border-[#dbff5c] hover:text-[#dbff5c] transition-all cursor-pointer">
-                    <span class="material-symbols-outlined" style="font-size:14px"><?= $ic ?></span><?= $lb ?>
-                </span>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <!-- Navigation links -->
-        <div class="space-y-4">
-            <p class="text-[11px] font-bold uppercase tracking-[.15em] text-zinc-500 border-b border-zinc-700 pb-3">Điều Hướng</p>
-            <div class="space-y-3">
-                <a href="<?= url() ?>" class="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors group">
-                    <span class="w-1.5 h-1.5 bg-[#bb0509] group-hover:bg-[#dbff5c] transition-colors shrink-0"></span>Cửa Hàng
-                </a>
-                <button onclick="openModal('modal-about')" class="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors group w-full text-left">
-                    <span class="w-1.5 h-1.5 bg-[#bb0509] group-hover:bg-[#dbff5c] transition-colors shrink-0"></span>Giới Thiệu
-                </button>
-                <button onclick="openModal('modal-leaderboard')" class="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors group w-full text-left">
-                    <span class="w-1.5 h-1.5 bg-[#bb0509] group-hover:bg-[#dbff5c] transition-colors shrink-0"></span>Bảng Điểm
-                </button>
-                <a href="<?= url('Admin') ?>" class="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors group">
-                    <span class="w-1.5 h-1.5 bg-[#bb0509] group-hover:bg-[#dbff5c] transition-colors shrink-0"></span>Quản Trị
-                </a>
-            </div>
-        </div>
-
-        <!-- Support & legal -->
-        <div class="space-y-4">
-            <p class="text-[11px] font-bold uppercase tracking-[.15em] text-zinc-500 border-b border-zinc-700 pb-3">Hỗ Trợ & Pháp Lý</p>
-            <div class="space-y-3">
-                <button onclick="openModal('modal-policy')" class="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors group w-full text-left">
-                    <span class="w-1.5 h-1.5 bg-[#526600] group-hover:bg-[#dbff5c] transition-colors shrink-0"></span>Chính Sách
-                </button>
-                <button onclick="openModal('modal-terms')" class="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors group w-full text-left">
-                    <span class="w-1.5 h-1.5 bg-[#526600] group-hover:bg-[#dbff5c] transition-colors shrink-0"></span>Điều Khoản
-                </button>
-                <button onclick="openModal('modal-support')" class="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors group w-full text-left">
-                    <span class="w-1.5 h-1.5 bg-[#526600] group-hover:bg-[#dbff5c] transition-colors shrink-0"></span>Hỗ Trợ
-                </button>
-            </div>
-            <div class="mt-4 bg-zinc-800 border-2 border-zinc-600 p-4 space-y-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Liên Hệ Nhanh</p>
-                <p class="text-sm text-[#dbff5c] font-brand font-bold">0901 234 567</p>
-                <p class="text-xs text-zinc-500">T2–T7 · 9:00 – 21:00</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bottom bar -->
-    <div class="border-t border-zinc-800">
-        <div class="max-w-[1200px] mx-auto px-4 md:px-12 py-5 flex flex-col md:flex-row justify-between items-center gap-3">
-            <div class="font-brand text-[10px] text-zinc-600 uppercase tracking-[.15em]">© 1989–2026 PIXEL VAULT. MỌI QUYỀN ĐƯỢC BẢO LƯU.</div>
-            <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span class="font-brand text-[9px] text-zinc-600 uppercase tracking-widest">HỆ THỐNG ĐANG HOẠT ĐỘNG</span>
-            </div>
-        </div>
-    </div>
-</footer>
+<?php include __DIR__ . '/../shares/siteFooter.php'; ?>
 
 <script>
 // ── MODAL ──
@@ -1083,8 +969,14 @@ async function loadFilteredProducts(url, pushState = true) {
     const currentResults = document.getElementById('product-results');
     if (currentResults) currentResults.classList.add('is-loading');
 
-    const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-    const html = await response.text();
+    let html = '';
+    try {
+        const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        html = await response.text();
+    } catch (error) {
+        if (currentResults) currentResults.classList.remove('is-loading');
+        return;
+    }
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const nextResults = doc.getElementById('product-results');
     const nextCount = doc.getElementById('product-count');
@@ -1153,11 +1045,12 @@ document.addEventListener('click', event => {
     if (!link) return;
 
     event.preventDefault();
+    event.stopPropagation();
     const targetUrl = link.href.replace(/#.*$/, '');
     loadFilteredProducts(targetUrl).finally(() => {
         document.getElementById('games')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-});
+}, true);
 
 if (filterReset && filterForm) {
     filterReset.addEventListener('click', event => {
@@ -1218,8 +1111,10 @@ function renderCart() {
             <p class="font-bold text-[#1b1c1c] uppercase text-sm tracking-widest mb-1 leading-relaxed">Giỏ hàng trống!</p>
             <p class="text-[#49473f] text-sm leading-relaxed">Thêm game vào giỏ để bắt đầu</p>
         </div>`;
-        badgeEl.classList.add('hidden');
-        badgeEl.style.display = '';
+        if (badgeEl) {
+            badgeEl.classList.add('hidden');
+            badgeEl.style.display = '';
+        }
         totalEl.textContent = '0đ';
         if (messageEl && !messageEl.dataset.keep) {
             messageEl.classList.add('hidden');
@@ -1228,9 +1123,11 @@ function renderCart() {
         return;
     }
 
-    badgeEl.classList.remove('hidden');
-    badgeEl.style.display = 'flex';
-    badgeEl.textContent = count;
+    if (badgeEl) {
+        badgeEl.classList.remove('hidden');
+        badgeEl.style.display = 'flex';
+        badgeEl.textContent = count;
+    }
 
     let total = 0;
     const rows = cart.map(item => {
